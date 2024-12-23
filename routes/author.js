@@ -3,7 +3,7 @@ const router = express.Router();
 const Author = require('../models/author');
 const multer = require('multer');
 const bcrypt = require('bcrypt');
-const jwt = require ('jsonwebtoken');
+const jwt = require('jsonwebtoken');
 
 filename = ''
 const mystorage = multer.diskStorage({
@@ -17,7 +17,7 @@ const mystorage = multer.diskStorage({
 })
 const upolad = multer({ storage: mystorage })
 
-router.post('/register', upolad.any('image'), (req,res)=>{
+router.post('/register', upolad.any('image'), (req, res) => {
     data = req.body
     author = new Author(data)
     author.image = filename
@@ -27,59 +27,112 @@ router.post('/register', upolad.any('image'), (req,res)=>{
 
     author.save()
         .then(
-            (authorSaved)=>{
+            (authorSaved) => {
                 res.status(200).send(authorSaved)
             }
         )
         .catch(
-            (err)=>{
+            (err) => {
                 res.status(400).send(err)
             }
         )
-    
+
 })
 
-router.post('/login', (req,res)=>{
+router.post('/login', (req, res) => {
     let data = req.body
-    Author.findOne({email :data.email})
+    Author.findOne({ email: data.email })
         .then(
-            (author)=>{
+            (author) => {
                 let validPass = bcrypt.compareSync(data.password, author.password)
-                if(!validPass){
+                if (!validPass) {
                     res.send("email or password invalid");
                 }
-                else{
+                else {
                     let payload = {
                         _id: author.id,
                         email: author.email,
                         fullname: author.name + ' ' + author.lastName
                     }
                     let token = jwt.sign(payload, '123456789');
-                    res.send({mytoken: token})
+                    res.send({ mytoken: token })
                 }
             }
         )
         .catch(
-            (err)=>{
+            (err) => {
                 res.status(400).send(err)
             }
         )
 
 })
 
-router.get('/all', (req,res)=>{
+router.get('/all', (req, res) => {
+    Author.find({})
+        .then(
+            (authors) => {
+                res.status(200).send(authors)
+            }
+        )
+        .catch(
+            (err) => {
+                res.status(400).send(err)
+            }
+        )
 
 })
 
-router.get('/getbyid/:id', (req,res)=>{
+router.get('/getbyid/:id', (req, res) => {
+    let id = req.params.id
+    Author.findById({ _id: id })
+        .then(
+            (author) => {
+                res.status(200).send(author)
+            }
+        )
+        .catch(
+            (err) => {
+                res.status(400).send(err)
+            }
+        )
 
 })
 
-router.delete('/supprimer/:id', (req,res)=>{
+router.delete('/supprimer/:id', (req, res) => {
+    let id = req.params.id
+    Author.findByIdAndDelete({ _id: id })
+        .then(
+            (author) => {
+                res.status(200).send(author)
+            }
+        )
+        .catch(
+            (err) => {
+                res.status(400).send(err)
+            }
+        )
 
 })
 
-router.put('/update/:id', (req,res)=>{
+router.put('/update/:id',upolad.any('image'), (req, res) => {
+    let id = req.params.id
+    let data = req.body
+
+    if (filename.length > 0) {
+        data.image = filename
+    }
+
+    Author.findByIdAndUpdate({ _id: id }, data)
+        .then(
+            (author) => {
+                res.status(200).send(author)
+            }
+        )
+        .catch(
+            (err) => {
+                res.status(400).send(err)
+            }
+        )
 
 })
 
